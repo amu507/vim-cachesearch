@@ -9,7 +9,7 @@ nnoremap ff :Search <C-R>=expand("<cword>")<CR> f<c-left><left>
 "nnoremap cs :Search <C-R>=expand("<cword>")<CR> n<c-b><c-right><c-right>
 nnoremap fc :call Search('<C-R>=expand("<cword>")<CR>' ,'n','<C-R>=expand("%:e")<CR>','<C-R>=expand("%:p:h")<CR>')<home><c-right><c-right><left>
 nnoremap fa :call Search('<C-R>=expand("<cword>")<CR>' ,'n','<C-R>=expand("%:e")<CR>')<home><c-right><c-right><left>
-nnoremap fo :call Search('<C-R>=expand("<cword>")<CR>' ,'o','<C-R>=expand("%:e")<CR>','<C-R>=expand("%:p:h")<CR>')<home><c-right><c-right><left>
+nnoremap fo :call Search('<C-R>=expand("<cword>")<CR>' ,'or','<C-R>=expand("%:e")<CR>','<C-R>=expand("%:p:h")<CR>')<home><c-right><c-right><left>
 
 function! Search(...)
 let lstRet=[]
