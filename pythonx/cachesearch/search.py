@@ -407,7 +407,6 @@ class CCacheSearch(saveable.CSave):
 
     def SearchOne(self,dData,sRoot,oPat,lstRet):
         sFile=self.GetCurFileName()
-        print sFile,len(dData)
         lstDir,dRoot=dData[sRoot]
         for iLine,sLine in dRoot[sFile]["l"].iteritems():
             if oPat in sLine:
@@ -417,7 +416,6 @@ class CCacheSearch(saveable.CSave):
     def SearchROne(self,dData,sRoot,oPat,lstRet):
         sFile=self.GetCurFileName()
         lstDir,dRoot=dData[sRoot]
-        print sRoot,getCoding(sRoot),sFile,getCoding(sFile),len(dRoot)
         for iLine,sLine in dRoot[sFile]["l"].iteritems():
             if oPat.search(sLine):
                 sPath=FormatPathStr(sRoot,sFile)
