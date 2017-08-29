@@ -10,6 +10,72 @@ RESULT_FORMAT_FILE="%s|f|%s"
 FILE_ENCODE_LIST=("gbk","utf-8","cp1252",None)
 FILE_PATH_CNCODE="gbk"  #window的路径是GBK格式的
 
+def getCoding(strInput):
+    '''
+    获取编码格式
+    '''
+    if isinstance(strInput, unicode):
+        return "unicode"
+    try:
+        strInput.decode("utf8")
+        return 'utf8'
+    except:
+        pass
+    try:
+        strInput.decode("gbk")
+        return 'gbk'
+    except:
+        pass
+
+def tran2UTF8(strInput):
+    '''
+    转化为utf8格式
+    '''
+    strCodingFmt = getCoding(strInput)
+    if strCodingFmt == "utf8":
+        return strInput
+    elif strCodingFmt == "unicode":
+        return strInput.encode("utf8")
+    elif strCodingFmt == "gbk":
+        return strInput.decode("gbk").encode("utf8")
+
+def tran2GBK(strInput):
+    '''
+    转化为gbk格式
+    '''
+    strCodingFmt = getCoding(strInput)
+    if strCodingFmt == "gbk":
+        return strInput
+    elif strCodingFmt == "unicode":
+        return strInput.encode("gbk")
+    elif strCodingFmt == "utf8":
+        return strInput.decode("utf8").encode("gbk")
+
+def IsWindows():
+    if os.name=="nt":
+        return True
+    return False
+
+if IsWindows():
+    PATH_SPLIT_MARK="\\"
+else:
+    PATH_SPLIT_MARK="/"
+
+def FormatPathStr(*args):
+    if IsWindows():
+        lPath=map(lambda x:tran2GBK(x),args)
+        sPath=PATH_SPLIT_MARK.join(lPath)
+        if "/" in sPath:
+            sPath=sPath.replace("/","\\")
+            raise Exception("wrong path format os:%s path:%s"%(os.name,sPath))
+    else:
+        lPath=map(lambda x:tran2UTF8(x),args)
+        sPath=PATH_SPLIT_MARK.join(lPath)
+        if "\\" in sPath:
+            sPath=sPath.replace("\\","/")
+            raise Exception("wrong path format os:%s path:%s"%(os.name,sPath))
+    return sPath
+
 class CCacheSearch(saveable.CSave):
     """
     struct
@@ -49,7 +115,9 @@ class CCacheSearch(saveable.CSave):
         for sPro,lstDir in self.m_ProPaths.iteritems():
             for sDir in lstDir:
                 self.m_AllObserveDir.add(sDir)
-    
+        if not IsWindows():
+            self.m_Observe=0
+
     def Load(self,dData):
         if self.m_Observe:
             return
@@ -89,7 +157,7 @@ class CCacheSearch(saveable.CSave):
         lstDir,_=dRoot[sRoot]
         del dRoot[sRoot]
         for sDir in lstDir:
-            sSubRoot="%s\\%s"%(sRoot,sDir)
+            sSubRoot=FormatPathStr(sRoot,sDir)
             self.DelRoot(sExt,sSubRoot)
 
     def UpdateRoot(self,sRoot,sExt):
@@ -109,7 +177,7 @@ class CCacheSearch(saveable.CSave):
             dNewRoot[sExt]={}
 
         for sTmpR,lstDir,lstFile in os.walk(sRoot):
-            if sTmpR.split("\\")[-1] in self.m_IgnoreSearch:
+            if sTmpR.split(PATH_SPLIT_MARK)[-1] in self.m_IgnoreSearch:
                 continue
             sTmpR=tran2UTF8(sTmpR)
             lstDir=map(lambda x:tran2UTF8(x),lstDir)
@@ -122,7 +190,7 @@ class CCacheSearch(saveable.CSave):
                 dNewFile[sExt]={}
             for sFile in lstFile:
                 #getmtime路径要转回去
-                sPath="%s\\%s"%(tran2GBK(sTmpR),tran2GBK(sFile))
+                sPath=FormatPathStr(tran2GBK(sTmpR),tran2GBK(sFile))
                 _,sExt=os.path.splitext(sPath)
                 if not sExt in setExt:
                     continue
@@ -159,7 +227,7 @@ class CCacheSearch(saveable.CSave):
                 for sDir in lstDir:
                     if getCoding(sDir)!="utf8":
                         raise Exception("sDir not utf8 %s ,   %s  %s"%(sRoot,sDir,getCoding(sDir)))
-
+    
     def ReadLines(self,sFile,dLine):
         for sEncode in FILE_ENCODE_LIST:
             try:
@@ -205,9 +273,9 @@ class CCacheSearch(saveable.CSave):
             self.m_NeedUpdateFile.add(sFile)
 
     def CheckObserve(self,lstRoot):
-        import dirobserver
         if not self.m_Observe:
             return
+        import dirobserver
         observeset=(set(lstRoot)&self.m_AllObserveDir)-self.m_HasObserveDir
         if not observeset:
             return
@@ -316,9 +384,10 @@ class CCacheSearch(saveable.CSave):
         for sFile,dFile in dRoot.iteritems():
             for iLine,sLine in dFile["l"].iteritems():
                 if oPat in sLine:
-                    lstRet.append(RESULT_FORMAT%(sRoot+"\\"+sFile,iLine,sLine))
+                    sPath=FormatPathStr(sRoot,sFile)
+                    lstRet.append(RESULT_FORMAT%(sPath,iLine,sLine))
         for sDir in lstDir:
-            sDeepR="%s\\%s"%(sRoot,sDir)
+            sDeepR=FormatPathStr(sRoot,sDir)
             self.SearchRoot(dData,sDeepR,oPat,lstRet)
 
     def SearchRRoot(self,dData,sRoot,oPat,lstRet):
@@ -326,9 +395,10 @@ class CCacheSearch(saveable.CSave):
         for sFile,dFile in dRoot.iteritems():
             for iLine,sLine in dFile["l"].iteritems():
                 if oPat.search(sLine):
-                    lstRet.append(RESULT_FORMAT%(sRoot+"\\"+sFile,iLine,sLine))
+                    sPath=FormatPathStr(sRoot,sFile)
+                    lstRet.append(RESULT_FORMAT%(sPath,iLine,sLine))
         for sDir in lstDir:
-            sDeepR="%s\\%s"%(sRoot,sDir)
+            sDeepR=FormatPathStr(sRoot,sDir)
             self.SearchRRoot(dData,sDeepR,oPat,lstRet)
 
     def GetCurFileName(self):
@@ -341,77 +411,40 @@ class CCacheSearch(saveable.CSave):
         lstDir,dRoot=dData[sRoot]
         for iLine,sLine in dRoot[sFile]["l"].iteritems():
             if oPat in sLine:
-                lstRet.append(RESULT_FORMAT%(sRoot+"\\"+sFile,iLine,sLine))
+                sPath=FormatPathStr(sRoot,sFile)
+                lstRet.append(RESULT_FORMAT%(sPath,iLine,sLine))
 
     def SearchROne(self,dData,sRoot,oPat,lstRet):
         sFile=self.GetCurFileName()
         lstDir,dRoot=dData[sRoot]
+        print sRoot,getCoding(sRoot),sFile,getCoding(sFile),len(dRoot)
         for iLine,sLine in dRoot[sFile]["l"].iteritems():
             if oPat.search(sLine):
-                lstRet.append(RESULT_FORMAT%(sRoot+"\\"+sFile,iLine,sLine))
+                sPath=FormatPathStr(sRoot,sFile)
+                lstRet.append(RESULT_FORMAT%(sPath,iLine,sLine))
 
     def SearchFile(self,dData,sRoot,oPat,lstRet):
         lstDir,dRoot=dData[sRoot]
         for sFile,dFile in dRoot.iteritems():
-            sPath="%s\\%s"%(sRoot,sFile)
+            sPath=FormatPathStr(sRoot,sFile)
             #only \\ in oPat,we search fullfile
-            if "\\" in oPat and oPat in sPath:
+            if PATH_SPLIT_MARK in oPat and oPat in sPath:
                 lstRet.append(RESULT_FORMAT_FILE%(sPath,"file\n"))
             elif oPat in sFile:
                 lstRet.append(RESULT_FORMAT_FILE%(sPath,"file\n"))
         for sDir in lstDir:
-            sDeepR="%s\\%s"%(sRoot,sDir)
+            sDeepR=FormatPathStr(sRoot,sDir)
             self.SearchFile(dData,sDeepR,oPat,lstRet)
 
     def SearchRFile(self,dData,sRoot,oPat,lstRet):
         lstDir,dRoot=dData[sRoot]
         for sFile,dFile in dRoot.iteritems():
-            sPath="%s\\%s"%(sRoot,sFile)
+            sPath=FormatPathStr(sRoot,sFile)
             if oPat.search(sPath):
                 lstRet.append(RESULT_FORMAT_FILE%(sPath,"file\n"))
         for sDir in lstDir:
-            sDeepR="%s\\%s"%(sRoot,sDir)
+            sDeepR=FormatPathStr(sRoot,sDir)
             self.SearchRFile(dData,sDeepR,oPat,lstRet)
 
 
-def getCoding(strInput):
-    '''
-    获取编码格式
-    '''
-    if isinstance(strInput, unicode):
-        return "unicode"
-    try:
-        strInput.decode("utf8")
-        return 'utf8'
-    except:
-        pass
-    try:
-        strInput.decode("gbk")
-        return 'gbk'
-    except:
-        pass
-
-def tran2UTF8(strInput):
-    '''
-    转化为utf8格式
-    '''
-    strCodingFmt = getCoding(strInput)
-    if strCodingFmt == "utf8":
-        return strInput
-    elif strCodingFmt == "unicode":
-        return strInput.encode("utf8")
-    elif strCodingFmt == "gbk":
-        return strInput.decode("gbk").encode("utf8")
-
-def tran2GBK(strInput):
-    '''
-    转化为gbk格式
-    '''
-    strCodingFmt = getCoding(strInput)
-    if strCodingFmt == "gbk":
-        return strInput
-    elif strCodingFmt == "unicode":
-        return strInput.encode("gbk")
-    elif strCodingFmt == "utf8":
-        return strInput.decode("utf8").encode("gbk")
 
