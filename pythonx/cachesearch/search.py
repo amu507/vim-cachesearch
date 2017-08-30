@@ -190,7 +190,7 @@ class CCacheSearch(saveable.CSave):
                 dNewFile[sExt]={}
             for sFile in lstFile:
                 #getmtime路径要转回去
-                sPath=FormatPathStr(tran2GBK(sTmpR),tran2GBK(sFile))
+                sPath=FormatPathStr(sTmpR,sFile)
                 _,sExt=os.path.splitext(sPath)
                 if not sExt in setExt:
                     continue
@@ -243,7 +243,7 @@ class CCacheSearch(saveable.CSave):
 
     def UpdatedFile(self):
         for sPath in self.m_NeedUpdateFile:
-            sPath=sPath.encode(FILE_PATH_CNCODE)
+            sPath=FormatPathStr(sPath)
             if os.path.isfile(sPath):
                 iDel=0
             else:
@@ -289,7 +289,10 @@ class CCacheSearch(saveable.CSave):
         if "f" in sMode and ";" in sText:
                 if not "r" in sMode:
                     sMode="%sr"%(sMode)
-                sText=sText.replace(";",".*\\\\")
+                if IsWindows():
+                    sText=sText.replace(";",".*\\\\")
+                else:
+                    sText=sText.replace(";",".*/")
 
         if not sRoot:
             sRoot=env.curdir
