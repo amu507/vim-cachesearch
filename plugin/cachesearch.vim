@@ -10,6 +10,7 @@ nnoremap ff :Search <C-R>=expand("<cword>")<CR> f<c-left><left>
 nnoremap fc :call Search('<C-R>=expand("<cword>")<CR>' ,'n','<C-R>=expand("%:e")<CR>','<C-R>=expand("%:p:h")<CR>')<home><c-right><c-right><left>
 nnoremap fa :call Search('<C-R>=expand("<cword>")<CR>' ,'n','<C-R>=expand("%:e")<CR>')<home><c-right><c-right><left>
 nnoremap fo :call Search('<C-R>=expand("<cword>")<CR>' ,'or','<C-R>=expand("%:e")<CR>','<C-R>=expand("%:p:h")<CR>')<home><c-right><c-right><left>
+nnoremap fcc :call ClearSearchCache()<cr>
 
 function! Search(...)
 let lstRet=[]
@@ -46,6 +47,14 @@ python << EOF
 #i=env.var('input("hhhhhhhhhhh")')
 import dirobserver
 dirobserver.KillAll()
+EOF
+endfunction
+
+function! ClearSearchCache()
+python << EOF
+import cachesearch
+if os.name!="nt":
+    cachesearch.g_SearchEngin.InitCache()
 EOF
 endfunction
 
