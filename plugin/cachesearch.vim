@@ -53,8 +53,7 @@ endfunction
 function! ClearSearchCache()
 python << EOF
 import cachesearch
-if os.name!="nt":
-    cachesearch.g_SearchEngin.InitCache()
+cachesearch.g_SearchEngin.InitCache()
 EOF
 endfunction
 

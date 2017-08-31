@@ -11,7 +11,7 @@ FILE_ENCODE_LIST=("gbk","utf-8","cp1252",None)
 
 def getCoding(strInput):
     '''
-    获取编码格式
+    鑾峰彇缂栫爜鏍煎紡
     '''
     if isinstance(strInput, unicode):
         return "unicode"
@@ -28,7 +28,7 @@ def getCoding(strInput):
 
 def tran2UTF8(strInput):
     '''
-    转化为utf8格式
+    杞寲涓簎tf8鏍煎紡
     '''
     strCodingFmt = getCoding(strInput)
     if strCodingFmt == "utf8":
@@ -40,7 +40,7 @@ def tran2UTF8(strInput):
 
 def tran2GBK(strInput):
     '''
-    转化为gbk格式
+    杞寲涓篻bk鏍煎紡
     '''
     strCodingFmt = getCoding(strInput)
     if strCodingFmt == "gbk":
@@ -192,7 +192,7 @@ class CCacheSearch(saveable.CSave):
                 dOldFile[sExt]=self.m_Data[sExt].get(sTmpR,([],{}))[1]
                 dNewFile[sExt]={}
             for sFile in lstFile:
-                #getmtime路径要转回去
+                #getmtime璺緞瑕佽浆鍥炲幓
                 sPath=FormatPathStr(sTmpR,sFile)
                 _,sExt=os.path.splitext(sPath)
                 if not sExt in setExt:
@@ -314,7 +314,7 @@ class CCacheSearch(saveable.CSave):
         self.m_LastRoot=sRoot
 
         if self.m_PriPros:
-            #优先使用Pros里的定义
+            #浼樺厛浣跨敤Pros閲岀殑瀹氫箟
             if self.m_ProExts.get(sRoot,[]):
                 lstExt=self.m_ProExts[sRoot]
             else:
@@ -329,7 +329,7 @@ class CCacheSearch(saveable.CSave):
                 else:
                     lstExt=self.m_DefaultExt
         else:
-            #优先使用调用时的参数
+            #浼樺厛浣跨敤璋冪敤鏃剁殑鍙傛暟
             if not sAllExt:
                if sRoot in self.m_ProExts:
                    lstExt=self.m_ProExts[sRoot]
@@ -386,7 +386,7 @@ class CCacheSearch(saveable.CSave):
         oPat=re.compile(sFilter)
         lstNew=[]
         for sLine in lstRet:
-            sLine=tran2UTF8(sLine)  #VIM显示要用UTF8格式
+            sLine=tran2UTF8(sLine)  #VIM鏄剧ず瑕佺敤UTF8鏍煎紡
             sReal=sLine.split("|")[-1]
             if oPat.search(sReal):
                 lstNew.append(sLine)
