@@ -66,14 +66,14 @@ def FormatPathStr(*args):
         lPath=map(lambda x:tran2GBK(x),args)
         sPath=PATH_SPLIT_MARK.join(lPath)
         if "/" in sPath:
+            print "wrong path format os:%s path:%s"%(os.name,sPath)
             sPath=sPath.replace("/","\\")
-            raise Exception("wrong path format os:%s path:%s"%(os.name,sPath))
     else:
         lPath=map(lambda x:tran2UTF8(x),args)
         sPath=PATH_SPLIT_MARK.join(lPath)
         if "\\" in sPath:
+            print "wrong path format os:%s path:%s"%(os.name,sPath)
             sPath=sPath.replace("\\","/")
-            raise Exception("wrong path format os:%s path:%s"%(os.name,sPath))
     return sPath
 
 class CCacheSearch(saveable.CSave):
