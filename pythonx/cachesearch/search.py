@@ -8,7 +8,6 @@ import saveable
 RESULT_FORMAT="%s|%s|%s"
 RESULT_FORMAT_FILE="%s|f|%s"
 FILE_ENCODE_LIST=("gbk","utf-8","cp1252",None)
-FILE_PATH_CNCODE="gbk"  #window的路径是GBK格式的
 
 def getCoding(strInput):
     '''
