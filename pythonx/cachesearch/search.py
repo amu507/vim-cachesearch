@@ -287,12 +287,12 @@ class CCacheSearch(saveable.CSave):
     def Search(self,sText,sMode="n",sAllExt="",sRoot="",sFilter=""):
         self.UpdatedFile()
         if "f" in sMode and ";" in sText:
-                if not "r" in sMode:
-                    sMode="%sr"%(sMode)
-                if IsWindows():
-                    sText=sText.replace(";",".*\\\\")
-                else:
-                    sText=sText.replace(";",".*/")
+            if not "r" in sMode:
+                sMode="%sr"%(sMode)
+            if IsWindows():
+                sText=sText.replace(";",".*\\\\")
+            else:
+                sText=sText.replace(";",".*/")
 
         if not sRoot:
             sRoot=env.curdir
@@ -360,14 +360,21 @@ class CCacheSearch(saveable.CSave):
         }
         oFunc=dFunc[sMode]
         lstRet=[]
+        lstErr=[]
         for sRoot in lstRoot:
             sRoot=tran2UTF8(sRoot)
             self.UpdateRoot(sRoot,lstExt)
             for sExt in lstExt:
                 dData=self.m_Data[sExt]
-                oFunc(dData,sRoot,oPat,lstRet)
+                try:
+                    oFunc(dData,sRoot,oPat,lstRet)
+                except:
+                    lstErr.append("Root:%s,sExt:%s"%(sRoot,sExt))
         lstRet=self.Filter(lstRet,sFilter)
-        env.effqf("".join(lstRet))
+        sEffqf="".join(lstRet)
+        if lstErr:
+            sEffqf+="SearchError======\n"+"\n".join(lstErr)
+        env.effqf(sEffqf)
         self.CheckObserve(lstRoot)
 
     def Filter(self,lstRet,sFilter):
