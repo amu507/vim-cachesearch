@@ -64,15 +64,9 @@ def FormatPathStr(*args):
     if IsWindows():
         lPath=map(lambda x:tran2GBK(x),args)
         sPath=PATH_SPLIT_MARK.join(lPath)
-        if "/" in sPath:
-            print "wrong path format os:%s path:%s"%(os.name,sPath)
-            sPath=sPath.replace("/","\\")
     else:
         lPath=map(lambda x:tran2UTF8(x),args)
         sPath=PATH_SPLIT_MARK.join(lPath)
-        if "\\" in sPath:
-            print "wrong path format os:%s path:%s"%(os.name,sPath)
-            sPath=sPath.replace("\\","/")
     return sPath
 
 class CCacheSearch(saveable.CSave):
@@ -164,9 +158,15 @@ class CCacheSearch(saveable.CSave):
             sSubRoot=FormatPathStr(sRoot,sDir)
             self.DelRoot(sExt,sSubRoot)
 
-    def InIgnoreFolder(self,sPath):
-        sFolder=sPath.split(PATH_SPLIT_MARK)[-1]
-        if sFolder in self.m_IgnoreSearch:
+    def InIgnoreFolder(self,sPath,sRoot):
+        iIndex=sPath.index(sRoot)
+        sElse=sPath[iIndex+len(sRoot):]
+        if not sElse:
+            sFolder=sPath.split(PATH_SPLIT_MARK)[-1]
+            lstElse=[sFolder]
+        else:
+            lstElse=sElse.split(PATH_SPLIT_MARK)
+        if set(lstElse)&self.m_IgnoreSearch:
             return True
         return False
 
@@ -187,7 +187,7 @@ class CCacheSearch(saveable.CSave):
             dNewRoot[sExt]={}
 
         for sTmpR,lstDir,lstFile in os.walk(sRoot):
-            if self.InIgnoreFolder(sTmpR):
+            if self.InIgnoreFolder(sTmpR,sRoot):
                 continue
             sTmpR=tran2UTF8(sTmpR)
             lstDir=list(set(lstDir)-self.m_IgnoreSearch)
