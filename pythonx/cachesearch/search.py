@@ -117,6 +117,7 @@ class CCacheSearch(saveable.CSave):
         self.m_NeedUpdateFile=set()
         self.m_AllObserveDir=set()
         self.m_HasObserveDir=set()
+        self.m_IgnoreSearch|=set(["userdata","svn",".git"])
         for sPro,lstDir in self.m_ProPaths.iteritems():
             for sDir in lstDir:
                 self.m_AllObserveDir.add(sDir)
@@ -163,6 +164,12 @@ class CCacheSearch(saveable.CSave):
             sSubRoot=FormatPathStr(sRoot,sDir)
             self.DelRoot(sExt,sSubRoot)
 
+    def InIgnoreFolder(self,sPath):
+        sFolder=sPath.split(PATH_SPLIT_MARK)[-1]
+        if sFolder in self.m_IgnoreSearch:
+            return True
+        return False
+
     def UpdateRoot(self,sRoot,sExt):
         if self.m_Observe:
             iReturn=1
@@ -180,12 +187,12 @@ class CCacheSearch(saveable.CSave):
             dNewRoot[sExt]={}
 
         for sTmpR,lstDir,lstFile in os.walk(sRoot):
-            if sTmpR.split(PATH_SPLIT_MARK)[-1] in self.m_IgnoreSearch:
+            if self.InIgnoreFolder(sTmpR):
                 continue
             sTmpR=tran2UTF8(sTmpR)
+            lstDir=list(set(lstDir)-self.m_IgnoreSearch)
             lstDir=map(lambda x:tran2UTF8(x),lstDir)
             lstFile=map(lambda x:tran2UTF8(x),lstFile)
-            lstDir=list(set(lstDir)-self.m_IgnoreSearch)
             dNewFile={}
             dOldFile={}
             for sExt in setExt:
@@ -217,20 +224,7 @@ class CCacheSearch(saveable.CSave):
                     del dOld[sOldRoot]
             for sNewRoot,dData in dNew.iteritems():
                 dOld[sNewRoot]=dData
-        #self.CheckPathStrCode()
 
-    def CheckPathStrCode(self):
-        if not self.m_Data:
-            return
-        for sExt,dData in self.m_Data.iteritems():
-            for sRoot,ldata in dData.iteritems():
-                if getCoding(sRoot)!="utf8":
-                    raise Exception("sRoot not utf8 %s"%sRoot)
-                lstDir,dRoot=ldata
-                for sDir in lstDir:
-                    if getCoding(sDir)!="utf8":
-                        raise Exception("sDir not utf8 %s ,   %s  %s"%(sRoot,sDir,getCoding(sDir)))
-    
     def ReadLines(self,sFile,dLine):
         for sEncode in FILE_ENCODE_LIST:
             try:
@@ -287,66 +281,90 @@ class CCacheSearch(saveable.CSave):
             self.m_HasObserveDir.add(sDir)
         print "start observe",observeset
 
-    def Search(self,sText,sMode="n",sAllExt="",sRoot="",sFilter=""):
-        self.UpdatedFile()
-        if "f" in sMode and ";" in sText:
-            if not "r" in sMode:
-                sMode="%sr"%(sMode)
-            if IsWindows():
-                sText=sText.replace(";",".*\\\\")
-            else:
-                sText=sText.replace(";",".*/")
+    def GetCurFileName(self):
+        sName=env.var('expand("%:t")')
+        return tran2UTF8(sName)
 
-        if not sRoot:
-            sRoot=env.curdir
-            for sPro in sorted(self.m_ProPaths.keys(),reverse=True):
-                if sPro in sRoot:
-                    sRoot=sPro
-                    break
-            #eg gamepublic
-            if not sRoot in self.m_ProPaths:
-                for sPath in self.m_ProPaths.get(self.m_LastRoot,[]):
-                    if sPath in sRoot:
-                        sRoot=self.m_LastRoot
-                        break
-            if int(env.var("InSysBuf()")):
-                sRoot=self.m_LastRoot
-        self.m_LastRoot=sRoot
+    def GetCurFileExt(self,bAddDot=True):
+        sExt=env.var("expand('%:e')")
+        if bAddDot and sExt:
+            sExt="."+sExt
+        return tran2UTF8(sExt)
 
-        if self.m_PriPros:
+    def GetOuterExtList(self,sOuterExt):
+        lstExt=[]
+        for sExt in sOuterExt.split(","):
+            if sExt and not "." in sExt:
+                sExt=".%s"%sExt
+            lstExt.append(sExt)#允许搜索无后缀文件
+        return lstExt
+
+    def GetSearchExtList(self,sMode,sOuterExt,sRoot):
+        if "o" in sMode:
+            #搜索本文件不额外处理
+            lstExt=[]
+        elif self.m_PriPros:
             #优先使用Pros里的定义
             if self.m_ProExts.get(sRoot,[]):
                 lstExt=self.m_ProExts[sRoot]
+            elif sOuterExt:
+                lstExt=self.GetOuterExtList(sOuterExt)
             else:
-                if sAllExt:
-                    lstExt=[]
-                    for sExt in sAllExt.split(","):
-                        if not sExt:
-                            continue
-                        if not "." in sExt:
-                            sExt=".%s"%sExt
-                        lstExt.append(sExt)
-                else:
-                    lstExt=self.m_DefaultExt
+                lstExt=self.m_DefaultExt
         else:
             #优先使用调用时的参数
-            if not sAllExt:
-               if sRoot in self.m_ProExts:
-                   lstExt=self.m_ProExts[sRoot]
-               else:
-                   lstExt=self.m_DefaultExt
+            if sOuterExt:
+               lstExt=self.GetOuterExtList(sOuterExt)
+            elif sRoot in self.m_ProExts:
+                lstExt=self.m_ProExts[sRoot]
             else:
-               lstExt=[]
-               for sExt in sAllExt.split(","):
-                   if not sExt:
-                       continue
-                   if not "." in sExt:
-                       sExt=".%s"%sExt
-                   lstExt.append(sExt)
-        lstRoot=[sRoot]
+                lstExt=self.m_DefaultExt
+        #add cur file ext
+        sCurFileExt=self.GetCurFileExt()
+        if not sCurFileExt in lstExt:
+            lstExt.append(sCurFileExt)
+        return lstExt
+
+    def FormatInputText(self,sText,sMode):
+        if not "f" in sMode or not ";" in sText:
+            return sText
+        if not "r" in sMode:
+            sMode="%sr"%(sMode)
+        if IsWindows():
+            sText=sText.replace(";",".*\\\\")
+        else:
+            sText=sText.replace(";",".*/")
+        return sText
+
+    def FormatInputRoot(self,sRoot):
+        if sRoot:
+            return sRoot
+        sRoot=env.curdir
+        for sPro in sorted(self.m_ProPaths.keys(),reverse=True):
+            if sPro in sRoot:
+                sRoot=sPro
+                break
+        #eg gamepublic
+        if not sRoot in self.m_ProPaths:
+            for sPath in self.m_ProPaths.get(self.m_LastRoot,[]):
+                if sPath in sRoot:
+                    sRoot=self.m_LastRoot
+                    break
+        if int(env.var("InSysBuf()")):
+            sRoot=self.m_LastRoot
+        return sRoot
+
+    def Search(self,sText,sMode="n",sOuterExt="",sRoot="",sFilter=""):
+        self.UpdatedFile()
+        sText=self.FormatInputText(sText,sMode)
+        sRoot=self.FormatInputRoot(sRoot)
+        self.m_LastRoot=sRoot
+        lstExt=self.GetSearchExtList(sMode,sOuterExt,sRoot)
         if sRoot in self.m_ProPaths:
             lstRoot=self.m_ProPaths[sRoot]
-        print sRoot,getCoding(sRoot),sText,sMode,lstExt,lstRoot,sFilter
+        else:
+            lstRoot=[sRoot]
+        print sRoot,sText,sMode,lstExt,lstRoot,sFilter
 
         if "r" in sMode:
             oPat=re.compile(sText)
@@ -369,14 +387,9 @@ class CCacheSearch(saveable.CSave):
             self.UpdateRoot(sRoot,lstExt)
             for sExt in lstExt:
                 dData=self.m_Data[sExt]
-                try:
-                    oFunc(dData,sRoot,oPat,lstRet)
-                except:
-                    lstErr.append("Root:%s,sExt:%s"%(sRoot,sExt))
+                oFunc(dData,sRoot,oPat,lstRet)
         lstRet=self.Filter(lstRet,sFilter)
         sEffqf="".join(lstRet)
-        if lstErr:
-            sEffqf+="SearchError======\n"+"\n".join(lstErr)
         env.effqf(sEffqf)
         self.CheckObserve(lstRoot)
 
@@ -413,10 +426,6 @@ class CCacheSearch(saveable.CSave):
         for sDir in lstDir:
             sDeepR=FormatPathStr(sRoot,sDir)
             self.SearchRRoot(dData,sDeepR,oPat,lstRet)
-
-    def GetCurFileName(self):
-        sName=env.var('expand("%:t")')
-        return tran2UTF8(sName)
 
     def SearchOne(self,dData,sRoot,oPat,lstRet):
         sFile=self.GetCurFileName()
