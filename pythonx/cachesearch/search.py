@@ -5,8 +5,8 @@ import re
 import io 
 import saveable
 
-RESULT_FORMAT="%s|%s|%s"
-RESULT_FORMAT_FILE="%s|f|%s"
+RESULT_FORMAT="%s|%s|\t%s"
+RESULT_FORMAT_FILE="%s|f|\t%s"
 FILE_ENCODE_LIST=("gbk","utf-8","cp1252",None)
 
 def getCoding(strInput):
@@ -211,7 +211,12 @@ class CCacheSearch(saveable.CSave):
                     continue
                 dNewL={}
                 dNewF={"t":iMTime,"l":dNewL}
-                self.ReadLines(sPath,dNewL)
+                try:
+                    self.ReadLines(sPath,dNewL)
+                except:
+                    #ignore can't read file
+                    dNewFile[sExt][sFile]=dNewF
+                    continue
                 dNewFile[sExt][sFile]=dNewF
             for sExt in setExt:
                 dNewRoot[sExt][sTmpR]=(lstDir,dNewFile[sExt])
@@ -300,25 +305,25 @@ class CCacheSearch(saveable.CSave):
         return lstExt
 
     def GetSearchExtList(self,sMode,sOuterExt,sRoot):
-        if "o" in sMode:
+        if "a" not in sMode:#非all
             #搜索本文件不额外处理
             lstExt=[]
         elif self.m_PriPros:
             #优先使用Pros里的定义
             if self.m_ProExts.get(sRoot,[]):
-                lstExt=self.m_ProExts[sRoot]
+                lstExt=self.m_ProExts[sRoot][:]
             elif sOuterExt:
                 lstExt=self.GetOuterExtList(sOuterExt)
             else:
-                lstExt=self.m_DefaultExt
+                lstExt=self.m_DefaultExt[:]
         else:
             #优先使用调用时的参数
             if sOuterExt:
                lstExt=self.GetOuterExtList(sOuterExt)
             elif sRoot in self.m_ProExts:
-                lstExt=self.m_ProExts[sRoot]
+                lstExt=self.m_ProExts[sRoot][:]
             else:
-                lstExt=self.m_DefaultExt
+                lstExt=self.m_DefaultExt[:]
         #add cur file ext
         sCurFileExt=self.GetCurFileExt()
         if not sCurFileExt in lstExt:
@@ -327,14 +332,14 @@ class CCacheSearch(saveable.CSave):
 
     def FormatInputText(self,sText,sMode):
         if not "f" in sMode or not ";" in sText:
-            return sText
+            return sText,sMode
         if not "r" in sMode:
             sMode="%sr"%(sMode)
         if IsWindows():
             sText=sText.replace(";",".*\\\\")
         else:
             sText=sText.replace(";",".*/")
-        return sText
+        return sText,sMode
 
     def FormatInputRoot(self,sRoot):
         if sRoot:
@@ -356,7 +361,7 @@ class CCacheSearch(saveable.CSave):
 
     def Search(self,sText,sMode="n",sOuterExt="",sRoot="",sFilter=""):
         self.UpdatedFile()
-        sText=self.FormatInputText(sText,sMode)
+        sText,sMode=self.FormatInputText(sText,sMode)
         sRoot=self.FormatInputRoot(sRoot)
         self.m_LastRoot=sRoot
         lstExt=self.GetSearchExtList(sMode,sOuterExt,sRoot)
@@ -372,10 +377,19 @@ class CCacheSearch(saveable.CSave):
             oPat=sText
 
         dFunc={
+            #all content --curfile ext
             "n" :self.SearchRoot,
             "r" :self.SearchRRoot,
+            "nr" :self.SearchRRoot,
+            #all content --all ext
+            "a":self.SearchRoot,
+            "ar":self.SearchRRoot,
+            #file
             "f" :self.SearchFile,
             "fr":self.SearchRFile,
+            "fa":self.SearchRFile,
+            "far":self.SearchRFile,
+            #curfile content
             "o":self.SearchOne,
             "or":self.SearchROne,
         }
