@@ -387,7 +387,7 @@ class CCacheSearch(saveable.CSave):
             #file
             "f" :self.SearchFile,
             "fr":self.SearchRFile,
-            "fa":self.SearchRFile,
+            "fa":self.SearchFile,
             "far":self.SearchRFile,
             #curfile content
             "o":self.SearchOne,
