@@ -3,7 +3,7 @@ command! -nargs=* SaveSearch call SaveSearch(<f-args>)
 
 nnoremap ft :Search <C-R>=expand("<cword>")<CR><CR>
 vnoremap ft "ay:call Search(@a)<CR>
-nnoremap fd :let _func=expand("<cword>")\|call Search(_func,"n","","",GetDefineString(_func))<CR>
+nnoremap fd :let _func=expand("<cword>")\|call Search(_func,"n","","",GetDefineString(_func))<CR><CR>
 nnoremap fu :let _func=expand("<cword>")\|call Search(_func,"n","","", "[^a-zA-Z0-9]" .  _func . "[^a-zA-Z0-9]" )<CR>
 nnoremap ff :Search <C-R>=expand("<cword>")<CR> f<c-left><left>
 nnoremap ffa :Search <C-R>=expand("<cword>")<CR> fa<c-left><left>
