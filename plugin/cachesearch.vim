@@ -17,10 +17,13 @@ nnoremap fcc :call ClearSearchCache()<cr>
 func! GetDefineString(_func)
     let sName=""
     let sExt=expand("%:e")
+	let tPreFix=[]
+	let tSufFix=[]
     if sExt=="vim"
         let tPreFix=["func! ","function! ","let "]
     elseif sExt=="lua"
-        let tPreFix=["function ","function [0-9a-zA-Z_]+[:\.]"]
+        let tPreFix=["function ","function [0-9a-zA-Z_]+[:\.]",]
+		let tSufFix=["[ ]*=[ ]*function"]
     elseif sExt=="py"
         let tPreFix=["def ","class "]
     else
@@ -30,6 +33,9 @@ func! GetDefineString(_func)
     for sPrefix in tPreFix
         call add(tName,sPrefix.a:_func."[^0-9a-zA-Z_]")
     endfor
+	for sSuffix in tSufFix
+		call add(tName,a:_func.sSuffix)
+	endfor
     return join(tName,"\|")
 endfunc
 
