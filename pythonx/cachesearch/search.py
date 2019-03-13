@@ -99,6 +99,7 @@ class CCacheSearch(saveable.CSave):
         self.m_ProPaths=env.var("g:g_ProPaths")
         self.m_ProExts=env.var("g:g_ProExts")
         self.m_IgnoreSearch=set(env.var("g:g_IgnoreSearch"))
+        self.m_PropIgnores=env.var("g:g_ProIgnores")
         self.m_DefaultExt=[".py"]
         self.m_LastRoot="*"
         self.ReadData()
@@ -111,7 +112,7 @@ class CCacheSearch(saveable.CSave):
         self.m_NeedUpdateFile=set()
         self.m_AllObserveDir=set()
         self.m_HasObserveDir=set()
-        self.m_IgnoreSearch|=set(["userdata","svn",".git"])
+        self.m_IgnoreSearch|=set(["userdata",".svn",".git"])
         for sPro,lstDir in self.m_ProPaths.iteritems():
             for sDir in lstDir:
                 self.m_AllObserveDir.add(sDir)
@@ -166,7 +167,11 @@ class CCacheSearch(saveable.CSave):
             lstElse=[sFolder]
         else:
             lstElse=sElse.split(PATH_SPLIT_MARK)
-        if set(lstElse)&self.m_IgnoreSearch:
+        setElse=set(lstElse)
+        if setElse&self.m_IgnoreSearch:
+            return True
+        sPropRoot = self.FormatInputRoot("")
+        if set(self.m_PropIgnores.get(sPropRoot, []))&setElse:
             return True
         return False
 
@@ -186,11 +191,13 @@ class CCacheSearch(saveable.CSave):
                 self.m_Data[sExt]={}
             dNewRoot[sExt]={}
 
+        sPropRoot = self.FormatInputRoot("");
+        setPropIgnore=set(self.m_PropIgnores.get(sPropRoot, []))
         for sTmpR,lstDir,lstFile in os.walk(sRoot):
             if self.InIgnoreFolder(sTmpR,sRoot):
                 continue
             sTmpR=tran2UTF8(sTmpR)
-            lstDir=list(set(lstDir)-self.m_IgnoreSearch)
+            lstDir=list(set(lstDir)-self.m_IgnoreSearch-setPropIgnore)
             lstDir=map(lambda x:tran2UTF8(x),lstDir)
             lstFile=map(lambda x:tran2UTF8(x),lstFile)
             dNewFile={}
@@ -369,7 +376,7 @@ class CCacheSearch(saveable.CSave):
             lstRoot=self.m_ProPaths[sRoot]
         else:
             lstRoot=[sRoot]
-        print sRoot,sText,sMode,lstExt,lstRoot,sFilter
+        print "search:【",sRoot,sText,sMode,lstExt,lstRoot,sFilter,"】"
 
         if "r" in sMode:
             oPat=re.compile(sText)

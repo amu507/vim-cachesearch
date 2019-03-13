@@ -9,6 +9,7 @@ nnoremap ff :Search <C-R>=expand("<cword>")<CR> f<c-left><left>
 nnoremap ffa :Search <C-R>=expand("<cword>")<CR> fa<c-left><left>
 "nnoremap cs :Search <C-R>=expand("<cword>")<CR> n<c-b><c-right><c-right>
 nnoremap fc :call Search('<C-R>=expand("<cword>")<CR>' ,'n','<C-R>=expand("%:e")<CR>','<C-R>=expand("%:p:h")<CR>')<home><c-right><c-right><left>
+nnoremap fca :call Search('<C-R>=expand("<cword>")<CR>' ,'ar','<C-R>=expand("%:e")<CR>','<C-R>=expand("%:p:h")<CR>')<home><c-right><c-right><left>
 nnoremap fa :call Search('<C-R>=expand("<cword>")<CR>' ,'nr','<C-R>=expand("%:e")<CR>')<home><c-right><c-right><left>
 nnoremap faa :call Search('<C-R>=expand("<cword>")<CR>' ,'ar','<C-R>=expand("%:e")<CR>')<home><c-right><c-right><left>
 nnoremap fo :call Search('<C-R>=expand("<cword>")<CR>' ,'or','<C-R>=expand("%:e")<CR>','<C-R>=expand("%:p:h")<CR>')<home><c-right><c-right><left>
@@ -21,11 +22,13 @@ func! GetDefineString(_func)
 	let tSufFix=[]
 	if sExt=="vim"
 		let tPreFix=["func! ","function! ","let "]
-	elseif sExt=="lua"
-		let tPreFix=["function ","function [0-9a-zA-Z_]+[:\.]",]
-		let tSufFix=["[ ]*=[ ]*function"]
+	elseif sExt=="lua"||sExt=="js"
+		let tPreFix=["function ","function [0-9a-zA-Z_]+[:\.]","async function "]
+		let tSufFix=["[ ]*=[ ]*function", "[ ]*=[ ]*async function"]
 	elseif sExt=="py"
 		let tPreFix=["def ","class "]
+	elseif sExt=="sol"
+		let tPreFix=["function +","modifier +"]
 	else
 		let tPreFix=["class ","int ","void ","long "]
 	endif
