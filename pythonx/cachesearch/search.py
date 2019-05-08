@@ -244,7 +244,8 @@ class CCacheSearch(saveable.CSave):
                 oFile=io.open(sFile,encoding=sEncode)
                 for sLine in oFile:
                     iLine+=1
-                    dLine[iLine]=sLine.encode("utf-8")
+                    dLine[iLine]=tran2UTF8(sLine.encode(sEncode))#统一转化到UTF8
+                oFile.close()
                 return
             except:
                 oFile.close()
@@ -420,7 +421,7 @@ class CCacheSearch(saveable.CSave):
         oPat=re.compile(sFilter)
         lstNew=[]
         for sLine in lstRet:
-            sLine=tran2UTF8(sLine)  #VIM显示要用UTF8格式
+            #sLine=tran2UTF8(sLine)  #VIM显示要用UTF8格式
             sReal=sLine.split("|")[-1]
             if oPat.search(sReal):
                 lstNew.append(sLine)
