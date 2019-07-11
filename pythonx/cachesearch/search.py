@@ -244,7 +244,13 @@ class CCacheSearch(saveable.CSave):
                 oFile=io.open(sFile,encoding=sEncode)
                 for sLine in oFile:
                     iLine+=1
-                    dLine[iLine]=tran2UTF8(sLine.encode(sEncode))#统一转化到UTF8
+                    tranLine=tran2UTF8(sLine.encode(sEncode))
+                    dLine[iLine]=tranLine or sLine#统一转化到UTF8
+                    if tranLine == None:
+                        print("ReadLinesError", sFile, iLine, sEncode)
+                        # print(sLine)
+                        # print(tranLine)
+                        # print("------")
                 oFile.close()
                 return
             except:
