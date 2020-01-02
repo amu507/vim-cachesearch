@@ -333,7 +333,7 @@ class CCacheSearch(saveable.CSave):
         else:
             #优先使用调用时的参数
             if sOuterExt:
-               lstExt=self.GetOuterExtList(sOuterExt)
+                lstExt=self.GetOuterExtList(sOuterExt)
             elif sRoot in self.m_ProExts:
                 lstExt=self.m_ProExts[sRoot][:]
             else:
@@ -386,27 +386,30 @@ class CCacheSearch(saveable.CSave):
         print "search:【",sRoot,sText,sMode,lstExt,lstRoot,sFilter,"】"
 
         if "r" in sMode:
-            oPat=re.compile(sText)
+            if "f" in sMode:
+                oPat=re.compile(sText,re.IGNORECASE)
+            else:
+                oPat=re.compile(sText)
         else:
             oPat=sText
 
         dFunc={
-            #all content --curfile ext
-            "n" :self.SearchRoot,
-            "r" :self.SearchRRoot,
-            "nr" :self.SearchRRoot,
-            #all content --all ext
-            "a":self.SearchRoot,
-            "ar":self.SearchRRoot,
-            #file
-            "f" :self.SearchFile,
-            "fr":self.SearchRFile,
-            "fa":self.SearchFile,
-            "far":self.SearchRFile,
-            #curfile content
-            "o":self.SearchOne,
-            "or":self.SearchROne,
-        }
+                #all content --curfile ext
+                "n" :self.SearchRoot,
+                "r" :self.SearchRRoot,
+                "nr" :self.SearchRRoot,
+                #all content --all ext
+                "a":self.SearchRoot,
+                "ar":self.SearchRRoot,
+                #file
+                "f" :self.SearchFile,
+                "fr":self.SearchRFile,
+                "fa":self.SearchFile,
+                "far":self.SearchRFile,
+                #curfile content
+                "o":self.SearchOne,
+                "or":self.SearchROne,
+                }
         oFunc=dFunc[sMode]
         lstRet=[]
         lstErr=[]

@@ -5,8 +5,8 @@ nnoremap ft :Search <C-R>=expand("<cword>")<CR><CR>
 vnoremap ft "ay:call Search(@a)<CR>
 nnoremap fd :let _func=expand("<cword>")\|call Search(_func,"n","","",GetDefineString(_func))<CR><CR>
 nnoremap fu :let _func=expand("<cword>")\|call Search(_func,"n","","", "[^a-zA-Z0-9]" .  _func . "[^a-zA-Z0-9]" )<CR>
-nnoremap ff :Search <C-R>=expand("<cword>")<CR> f<c-left><left>
-nnoremap ffa :Search <C-R>=expand("<cword>")<CR> fa<c-left><left>
+nnoremap ff :Search <C-R>=expand("<cword>")<CR> fr<c-left><left>
+nnoremap ffa :Search <C-R>=expand("<cword>")<CR> far<c-left><left>
 "nnoremap cs :Search <C-R>=expand("<cword>")<CR> n<c-b><c-right><c-right>
 nnoremap fc :call Search('<C-R>=expand("<cword>")<CR>' ,'n','<C-R>=expand("%:e")<CR>','<C-R>=expand("%:p:h")<CR>')<home><c-right><c-right><left>
 nnoremap fca :call Search('<C-R>=expand("<cword>")<CR>' ,'ar','<C-R>=expand("%:e")<CR>','<C-R>=expand("%:p:h")<CR>')<home><c-right><c-right><left>
