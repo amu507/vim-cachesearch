@@ -4,7 +4,7 @@ command! -nargs=* SaveSearch call SaveSearch(<f-args>)
 nnoremap ft :Search <C-R>=expand("<cword>")<CR><CR>
 vnoremap ft "ay:call Search(@a)<CR>
 nnoremap fd :let _func=expand("<cword>")\|call Search(_func,"n","","",GetDefineString(_func))<CR><CR>
-nnoremap fu :let _func=expand("<cword>")\|call Search(_func,"n","","", "[^a-zA-Z0-9]" .  _func . "[^a-zA-Z0-9]" )<CR>
+nnoremap fu :let _func=expand("<cword>")\|call Search(_func,"n","","", "[^a-zA-Z0-9\'\"_]" .  _func . "[^a-zA-Z0-9\'\"_]" )<CR>
 nnoremap ff :Search <C-R>=expand("<cword>")<CR> fr<c-left><left>
 nnoremap ffa :Search <C-R>=expand("<cword>")<CR> far<c-left><left>
 "nnoremap cs :Search <C-R>=expand("<cword>")<CR> n<c-b><c-right><c-right>
@@ -13,7 +13,7 @@ nnoremap fca :call Search('<C-R>=expand("<cword>")<CR>' ,'ar','<C-R>=expand("%:e
 nnoremap fa :call Search('<C-R>=expand("<cword>")<CR>' ,'nr','<C-R>=expand("%:e")<CR>')<home><c-right><c-right><left>
 nnoremap faa :call Search('<C-R>=expand("<cword>")<CR>' ,'ar','<C-R>=expand("%:e")<CR>')<home><c-right><c-right><left>
 nnoremap fo :call Search('<C-R>=expand("<cword>")<CR>' ,'or','<C-R>=expand("%:e")<CR>','<C-R>=expand("%:p:h")<CR>')<home><c-right><c-right><left>
-nnoremap fcc :call ClearSearchCache()<cr>
+"nnoremap fcc :call ClearSearchCache()<cr>
 
 func! GetDefineString(_func)
 	let sName=""
@@ -22,8 +22,11 @@ func! GetDefineString(_func)
 	let tSufFix=[]
 	if sExt=="vim"
 		let tPreFix=["func! ","function! ","let "]
+	elseif sExt=="js" ||sExt=="ts"
+		let tPreFix=["function\\s+", "^\\s*", "\\s*class ", "private\\s+", "publi\\s+c", "async\\s+"]
+        let tSufFix=["\\s*=\\s*function", "\\s*=\\s*async\\s+function"]
 	elseif sExt=="lua"||sExt=="js"
-		let tPreFix=["function ","function [0-9a-zA-Z_]+[:\.]","async function "]
+		let tPreFix=["function ","function [0-9a-zA-Z_]+[:\.]","async function ", "^\\s*"]
 		let tSufFix=["[ ]*=[ ]*function", "[ ]*=[ ]*async function"]
 	elseif sExt=="py"
 		let tPreFix=["def ","class "]
